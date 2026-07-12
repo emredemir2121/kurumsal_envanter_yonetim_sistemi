@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - Tedarikçi Yönetimi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; }
+
+    /* SIDEBAR STYLE */
+    .sidebar { width: 280px; background: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500; transition: .2s; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a:hover, .sidebar-menu a.active { background: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+    .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background-color: #dc2626; }
+
+    /* MAIN CONTENT AREA GRID */
+    .main-content { flex: 1; padding: 25px; display: grid; grid-template-columns: 380px 1fr; gap: 20px; overflow: hidden; }
+
+    /* SOL VE SAĞ PANEL KUTULARI */
+    .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden; }
+    .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: #1e293b; font-weight: 700; display: flex; justify-content: space-between; align-items: center; shrink: 0; }
+
+    /* SAĞ PANEL İÇİNDE İKİ FORMU DİKEY BÖLÜŞTÜREN ALAN */
+    .right-layout { display: flex; flex-direction: column; gap: 20px; height: 100%; overflow: hidden; }
+    .sub-panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .sub-panel h3 { font-size: 15px; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; color: #1e293b; font-weight: 700; display: flex; justify-content: space-between; align-items: center; shrink: 0; }
+
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    .scroll-area::-webkit-scrollbar { width: 5px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+    /* OPERASYON FORMLARI */
+    .form-toggle-btn { background: #3b82f6; color: white; border: none; padding: 13px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-bottom: 10px; text-align: left; display: flex; align-items: center; justify-content: space-between; font-size: 14px; outline: none; }
+    .form-toggle-btn:hover { background: #2563eb; }
+    .form-box { display: none; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+    .form-content { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .form-content form { display: flex; flex-direction: column; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+    .form-group select, .form-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background: white; width: 100%; }
+    .btn-submit { background: #10b981; color: white; border: none; padding: 11px; border-radius: 5px; font-weight: 600; cursor: pointer; width: 100%; }
+
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; position: sticky; top: 0; z-index: 5; font-weight: 600; }
+    tr:hover { background: #f8fafc; }
+
+    .btn-delete { background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-delete:hover { background: #dc2626; }
+
+    .btn-remove-request { background: #f97316; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-remove-request:hover { background: #ea580c; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-csv { background: #059669; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .btn-csv:hover { background: #047857; }
+
+    .btn-email { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
+    .btn-email:hover { background: #0369a1; }
+
+    .badge-pending { background: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+
+    /* TOAST */
+    .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; z-index: 9999; transition: right .4s; }
+    .toast-notification.show { right: 20px; }
+    .toast-success { background: #10b981; }
+    .toast-error { background: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div id="dynamicToast" class="toast-notification">
+  <i id="toastIcon" class="fa-solid"></i>
+  <span id="toastMessage">Bildirim</span>
+</div>
+
+<div class="sidebar">
+  <div>
+    <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+      <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+      <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+      <li><a th:href="@{/suppliers}" class="active"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+      <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+      <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+      <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-content">
+
+  <div class="panel">
+    <h3><i class="fa-solid fa-gears"></i> Operasyonlar</h3>
+    <div class="scroll-area">
+
+      <button class="form-toggle-btn" onclick="toggleForm('addSupplierForm')">
+        <span><i class="fa-solid fa-plus"></i> Yeni Tedarikçi Ekle</span>
+        <i class="fa-solid fa-chevron-down" id="addSupplierForm-icon"></i>
+      </button>
+      <div id="addSupplierForm" class="form-box" th:style="${errorMessage != null} ? 'display:block;' : 'display:none;'">
+        <div class="form-content">
+          <form th:action="@{/suppliers/add}" th:object="${supplierForm}" method="post">
+            <div class="form-group">
+              <label>Firma / Şahıs Adı (company_name):</label>
+              <input type="text" th:field="*{companyName}" required placeholder="Örn: Beta Lojistik A.Ş.">
+            </div>
+            <div class="form-group">
+              <label>Vergi Numarası (tax_number):</label>
+              <input type="text" th:field="*{taxNumber}" placeholder="Örn: 1234567890">
+            </div>
+            <div class="form-group">
+              <label>İlgili Kişi (contact_person):</label>
+              <input type="text" th:field="*{contactPerson}" placeholder="Örn: Ahmet Yılmaz">
+            </div>
+            <div class="form-group">
+              <label>E-Posta (email):</label>
+              <input type="email" th:field="*{email}" placeholder="info@company.com">
+            </div>
+            <div class="form-group">
+              <label>Adres Bilgisi (address):</label>
+              <input type="text" th:field="*{address}" placeholder="Açık adres...">
+            </div>
+            <button type="submit" class="btn-submit">Sisteme Kaydet</button>
+          </form>
+        </div>
+      </div>
+
+      <button class="form-toggle-btn" style="background:#f59e0b;" onclick="toggleForm('requestProductForm')">
+        <span><i class="fa-solid fa-cart-plus"></i> Tedarikçiden Ürün Talep Et</span>
+        <i class="fa-solid fa-chevron-down" id="requestProductForm-icon"></i>
+      </button>
+      <div id="requestProductForm" class="form-box">
+        <div class="form-content">
+          <form th:action="@{/suppliers/request-product}" method="post">
+            <div class="form-group">
+              <label>Tedarikçi Seçiniz:</label>
+              <select name="supplierId" required>
+                <option value="" disabled selected>Seçim Yapın...</option>
+                <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.companyName}"></option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Talep Edilecek Ürün Detayı (Marka / Model / Tip):</label>
+              <input type="text" name="productDetails" required placeholder="Örn: Xiaomi MiBox11 veya Yeni Router R311">
+            </div>
+            <div class="form-group">
+              <label>Sipariş Adeti:</label>
+              <input type="number" name="quantity" min="1" value="1" required>
+            </div>
+            <button type="submit" class="btn-submit" style="background:#d97706;">Sipariş Talebi Gönder</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="right-layout">
+
+    <div class="sub-panel">
+      <h3>
+        <span><i class="fa-solid fa-rectangle-list"></i> Tedarikçilerden Edilen Ürün Talepleri Rapor Listesi</span>
+        <div class="header-actions">
+          <button class="btn-email" onclick="sendTedarikMail()">
+            <i class="fa-solid fa-envelope"></i> Talepleri Mail At
+          </button>
+          <a th:href="@{/suppliers/export-csv}" class="btn-csv">
+            <i class="fa-solid fa-file-csv"></i> Talepleri CSV'ye Aktar
+          </a>
+        </div>
+      </h3>
+      <div class="scroll-area">
+        <table id="requestsTable">
+          <thead>
+          <tr>
+            <th style="width: 70px;">Talep ID</th>
+            <th>Tedarikçi Firma</th>
+            <th>Talep Edilen Ürün / Detay</th>
+            <th style="width: 90px;">Miktar</th>
+            <th style="width: 155px;">İşlem Tarihi</th>
+            <th style="width: 100px;">Durum</th>
+            <th style="text-align: center; width: 90px;">Aksiyon</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="req : ${requests}" class="request-data-row">
+            <td th:text="${req.id}" style="font-weight: 600; color:#64748b;"></td>
+            <td th:text="${req.supplierName}" style="font-weight: 600; color: #1e293b;"></td>
+            <td th:text="${req.productName}" style="font-family: monospace; font-size: 12.5px;"></td>
+            <td th:text="${req.quantity} + ' Adet'" style="font-weight: 600;"></td>
+            <td th:text="${req.createdAt}"></td>
+            <td><span class="badge-pending">BEKLEMEDE</span></td>
+            <td style="text-align: center;">
+              <form th:action="@{/suppliers/request/delete/{id}(id=${req.id})}" method="post" onsubmit="return confirm('Bu ürün talebinden vazgeçmek ve listeden çıkarmak istediğinize emin misiniz?');">
+                <button type="submit" class="btn-remove-request">Çıkar</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(requests)}" id="noRequestRow">
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 25px;">Henüz bir ürün tedarik talebi gerçekleştirilmemiş.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-panel">
+      <h3><span><i class="fa-solid fa-address-book"></i> Kayıtlı Normal Sistem Tedarikçileri</span></h3>
+      <div class="scroll-area">
+        <table>
+          <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Firma Adı (company_name)</th>
+            <th>Vergi Numarası</th>
+            <th>Yetkili İletişim Kişisi</th>
+            <th>E-Posta Adresi</th>
+            <th>Adres Bilgisi</th> <th style="text-align: center; width: 80px;">Aksiyon</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="s : ${suppliers}">
+            <td th:text="${s.id}" style="font-weight: 600; color:#64748b;"></td>
+            <td th:text="${s.companyName}" style="font-weight: 600; color: #3b82f6;"></td>
+            <td th:text="${s.taxNumber != null && !s.taxNumber.isEmpty()} ? ${s.taxNumber} : '-'"></td>
+            <td th:text="${s.contactPerson != null && !s.contactPerson.isEmpty()} ? ${s.contactPerson} : '-'"></td>
+            <td th:text="${s.email != null && !s.email.isEmpty()} ? ${s.email} : '-'"></td>
+            <td th:text="${s.address != null && !s.address.isEmpty()} ? ${s.address} : '-'" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" th:title="${s.address}"></td>
+            <td style="text-align: center;">
+              <form th:action="@{/suppliers/delete/{id}(id=${s.id})}" method="post" onsubmit="return confirm('Bu tedarikçiyi silmek istediğinize emin misiniz?');">
+                <button type="submit" class="btn-delete">Sil</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(suppliers)}">
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 25px;">Sistemde kayıtlı normal tedarikçi firması bulunmuyor.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  function sendTedarikMail() {
+      var rows = document.querySelectorAll(".request-data-row");
+
+      if (rows.length === 0 || document.getElementById("noRequestRow")) {
+          alert("E-posta göndermek için listede en az bir aktif talep bulunmalıdır.");
+          return;
+      }
+
+      var emailTo = "ahmetdemir@beta.com.tr";
+      var subject = encodeURIComponent("Beta Teknoloji - Güncel Ürün Tedarik Talepleri Raporu");
+
+      var bodyMessage = "Merhaba Ahmet Bey,\n\n";
+      bodyMessage += "Sistem üzerinde bekleyen güncel ürün tedarik talepleri listesi aşağıda yer almaktadır:\n";
+      bodyMessage += "========================================================================\n\n";
+
+      rows.forEach(function(row) {
+          var cells = row.querySelectorAll("td");
+          var id = cells[0].innerText;
+          var supplier = cells[1].innerText;
+          var product = cells[2].innerText;
+          var quantity = cells[3].innerText;
+          var date = cells[4].innerText;
+
+          bodyMessage += "• Talep ID: " + id + "\n";
+          bodyMessage += "  Tedarikçi Firma: " + supplier + "\n";
+          bodyMessage += "  Ürün Bilgisi: " + product + "\n";
+          bodyMessage += "  Miktar: " + quantity + "\n";
+          bodyMessage += "  İşlem Tarihi: " + date + "\n";
+          bodyMessage += "------------------------------------------------------------------------\n";
+      });
+
+      bodyMessage += "\nİyi çalışmalar dilerim.\nBeta Teknoloji Bilişim Envanter Sistemi";
+      var mailtoUrl = "mailto:" + emailTo + "?subject=" + subject + "&body=" + encodeURIComponent(bodyMessage);
+      window.location.href = mailtoUrl;
+  }
+
+  function toggleForm(formId) {
+      const targetForm = document.getElementById(formId);
+      const targetIcon = document.getElementById(formId + "-icon");
+
+      document.querySelectorAll('.form-box').forEach(box => {
+          if(box.id !== formId) box.style.display = "none";
+      });
+
+      document.querySelectorAll('[id$="-icon"]').forEach(icon => {
+          if(icon.id !== formId + "-icon") {
+              icon.classList.remove("fa-chevron-up");
+              icon.classList.add("fa-chevron-down");
+          }
+      });
+
+      if(targetForm.style.display === "block"){
+          targetForm.style.display = "none";
+          targetIcon.className = "fa-solid fa-chevron-down";
+      }else{
+          targetForm.style.display = "block";
+          targetIcon.className = "fa-solid fa-chevron-up";
+      }
+  }
+
+  var successMsg = [[${successMessage}]];
+  var errorMsg = [[${errorMessage}]];
+  var toast = document.getElementById("dynamicToast");
+  if(successMsg){
+      document.getElementById("toastIcon").className = "fa-solid fa-circle-check";
+      document.getElementById("toastMessage").innerText = successMsg;
+      toast.className = "toast-notification toast-success show";
+      setTimeout(() => toast.classList.remove("show"), 3500);
+  } else if(errorMsg){
+      document.getElementById("toastIcon").className = "fa-solid fa-triangle-exclamation";
+      document.getElementById("toastMessage").innerText = errorMsg;
+      toast.className = "toast-notification toast-error show";
+      setTimeout(() => toast.classList.remove("show"), 3500);
+  }
+  /*]]>*/
+</script>
+</body>
+</html>

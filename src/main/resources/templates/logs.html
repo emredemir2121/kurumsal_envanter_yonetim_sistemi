@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - Sistem Kayıtları</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar { width: 280px; background: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500; transition: .2s; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a:hover, .sidebar-menu a.active { background: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+    .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background-color: #dc2626; }
+
+    /* MAIN CONTENT AREA */
+    .main-content { flex: 1; padding: 25px; display: flex; flex-direction: column; gap: 20px; height: 100vh; overflow: hidden; }
+
+    /* FILTRELEME BARASI PANELI */
+    .filter-panel { background: white; border-radius: 10px; padding: 15px 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; gap: 15px; align-items: center; justify-content: space-between; shrink: 0; }
+    .filter-panel form { display: flex; gap: 20px; width: 100%; align-items: center; }
+    .filter-group { display: flex; align-items: center; gap: 10px; }
+    .filter-group label { font-size: 13px; font-weight: 600; color: #475569; }
+    .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: white; }
+    .filter-group input { width: 250px; }
+    .btn-filter { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .btn-filter:hover { background: #2563eb; }
+    .btn-reset { background: #64748b; color: white; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+
+    /* LOG TABLOSU PANELI */
+    .log-panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .log-panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: #1e293b; font-weight: 700; }
+
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    .scroll-area::-webkit-scrollbar { width: 5px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+
+    .row-warning { background-color: #fffbeb !important; }
+    .row-security { background-color: #fef2f2 !important; }
+
+    /* Seviye Etiketleri */
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-info { background-color: #e0f2fe; color: #0369a1; }
+    .badge-warning { background-color: #fef3c7; color: #d97706; }
+    .badge-security { background-color: #fee2e2; color: #991b1b; }
+
+    .log-msg { color: #334155; font-family: 'Consolas', 'Courier New', monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div>
+    <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+      <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+      <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+      <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+      <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+      <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+      <li><a th:href="@{/logs}" class="active"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-content">
+
+  <div class="filter-panel">
+    <form th:action="@{/logs}" method="get">
+
+      <div class="filter-group">
+        <label>Seviye:</label>
+        <select name="level">
+          <option value="">Tümü</option>
+          <option value="INFO" th:selected="${selectedLevel == 'INFO'}">INFO</option>
+          <option value="WARNING" th:selected="${selectedLevel == 'WARNING'}">WARNING</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Kaynak:</label>
+        <select name="source">
+          <option value="">Tümü</option>
+          <option value="Güvenlik" th:selected="${selectedSource == 'Güvenlik'}">Güvenli Giriş</option>
+          <option value="Envanter" th:selected="${selectedSource == 'Envanter'}">Envanter Operasyonları</option>
+          <option value="INFO" th:selected="${selectedSource == 'INFO'}">Genel Bilgi</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Mesajda Ara:</label>
+        <input type="text" name="search" th:value="${selectedSearch}" placeholder="Kelime yazın (örn: giriş, eklendi)...">
+      </div>
+
+      <button type="submit" class="btn-filter">
+        <i class="fa-solid fa-filter"></i> Filtrele ve Getir
+      </button>
+
+      <a th:href="@{/logs}" class="btn-reset">Filtreleri Temizle</a>
+    </form>
+  </div>
+
+  <div class="log-panel">
+    <h3><i class="fa-solid fa-receipt"></i> Gerçek Zamanlı Sunucu ve Sistem Log Havuzu</h3>
+    <div class="scroll-area">
+      <table>
+        <thead>
+        <tr>
+          <th style="width: 70px;">ID</th>
+          <th style="width: 180px;">Zaman Damgası</th>
+          <th style="width: 120px;">Kayıt Seviyesi</th>
+          <th style="width: 150px;">İşlem Kaynağı</th>
+          <th>Detaylı Log Mesajı</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="log : ${logs}"
+            th:classappend="${'WARNING'.equalsIgnoreCase(log.seviye)} ? 'row-warning' : (${#strings.contains(#strings.toLowerCase(log.seviye), 'guvenlik') || #strings.contains(#strings.toLowerCase(log.seviye), 'güvenlik')} ? 'row-security' : '')">
+
+          <td th:text="${log.id}" style="color: #64748b; font-weight: 600;"></td>
+          <td th:text="${log.zamanStr}" style="color: #475569; font-weight: 500;"></td>
+
+          <td>
+            <span th:if="${'INFO'.equalsIgnoreCase(log.seviye)}" class="badge badge-info">INFO</span>
+            <span th:if="${'WARNING'.equalsIgnoreCase(log.seviye)}" class="badge badge-warning">WARNING</span>
+            <span th:if="${log.seviye != null && (#strings.contains(#strings.toLowerCase(log.seviye), 'guvenlik') || #strings.contains(#strings.toLowerCase(log.seviye), 'güvenlik'))}" class="badge badge-security">GÜVENLİK</span>
+          </td>
+
+          <td th:text="${log.kaynak}" style="font-weight: 600; color: #1e293b;"></td>
+          <td th:text="${log.mesaj}" class="log-msg"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(logs)}">
+          <td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;">
+            <i class="fa-solid fa-magnifying-glass" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+            Aranan kriterlere uygun hiçbir sistem kaydı bulunamadı.
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - Zimmet Talepleri</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; }
+    .sidebar { width: 280px; background: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; transition: .2s; font-size: 15px; font-weight: 500; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a:hover, .sidebar-menu a.active { background: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+    .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background-color: #dc2626; }
+    .main-content { flex: 1; padding: 25px; display: flex; flex-direction: column; overflow: hidden; }
+    .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: #1e293b; font-weight: 700; shrink: 0; }
+
+    .requests-filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 2fr 1.2fr; gap: 15px; shrink: 0; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; position: relative; }
+    .filter-group label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group i { position: absolute; left: 10px; top: 31px; color: #94a3b8; font-size: 13px; }
+    .filter-group input { width: 100%; padding: 8px 10px 8px 32px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background: white; }
+    .filter-group input[type="date"] { padding-left: 32px; }
+    .filter-group input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    .scroll-area::-webkit-scrollbar { width: 5px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; position: sticky; top: 0; z-index: 10; font-weight: 600; }
+    tr:hover { background: #f8fafc; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .badge-pending { background: #fef3c7; color: #d97706; }
+    .badge-zimmet { background: #dbeafe; color: #1d4ed8; }
+    .badge-iade { background: #fee2e2; color: #991b1b; }
+    .btn-action { border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; transition: .2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+    .btn-approve { background: #10b981; color: white; margin-right: 5px; }
+    .btn-approve:hover { background: #059669; }
+    .btn-reject { background: #ef4444; color: white; }
+    .btn-reject:hover { background: #dc2626; }
+    .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; z-index: 9999; transition: right .4s; }
+    .toast-notification.show { right: 20px; }
+    .toast-success { background: #10b981; }
+    .toast-error { background: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div id="dynamicToast" class="toast-notification">
+  <i id="toastIcon" class="fa-solid"></i>
+  <span id="toastMessage">Bildirim</span>
+</div>
+
+<div class="sidebar">
+  <div>
+    <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+      <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+      <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+      <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+      <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+      <li><a th:href="@{/requests}" class="active"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+      <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-content">
+  <div class="panel">
+    <h3><i class="fa-solid fa-bell"></i> Onay Bekleyen Zimmet ve İade Talepleri</h3>
+
+    <div class="requests-filter-box">
+      <div class="filter-group">
+        <label for="userFilterInput">Personel Arama</label>
+        <i class="fa-solid fa-user"></i>
+        <input type="text" id="userFilterInput" onkeyup="filterRequestsTable()" placeholder="Personel adı, soyadı veya departman yazın...">
+      </div>
+      <div class="filter-group">
+        <label for="itemFilterInput">Ürün Bilgisi Arama</label>
+        <i class="fa-solid fa-laptop"></i>
+        <input type="text" id="itemFilterInput" onkeyup="filterRequestsTable()" placeholder="Marka, model veya tip ara...">
+      </div>
+      <div class="filter-group">
+        <label for="dateFilterInput">Talep Tarihi Süzgeci</label>
+        <i class="fa-solid fa-calendar-days"></i>
+        <input type="date" id="dateFilterInput" onchange="filterRequestsTable()">
+      </div>
+    </div>
+
+    <div class="scroll-area">
+      <table id="requestsTable">
+        <thead>
+        <tr>
+          <th>Talep ID</th>
+          <th>Personel Bilgisi</th>
+          <th>Ürün / Envanter Bilgisi</th>
+          <th>Talep Tarihi</th>
+          <th>İşlem Tipi</th>
+          <th>Durum</th>
+          <th style="text-align: center; width: 200px;">Aksiyonlar</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${pendingRequests}"
+            class="request-row"
+            th:data-personel="${r.personelInfo}"
+            th:data-urun="${r.urunInfo}"
+            th:data-date="${r.createdAt}">
+          <td th:text="${r.id}" style="color: #64748b; font-weight: 600;"></td>
+          <td th:text="${r.personelInfo}"></td>
+          <td th:text="${r.urunInfo}"></td>
+          <td th:text="${r.createdAt}"></td>
+          <td>
+            <span th:class="${'ZIMMET'.equalsIgnoreCase(r.movementType)} ? 'badge badge-zimmet' : 'badge badge-iade'"
+                  th:text="${'ZIMMET'.equalsIgnoreCase(r.movementType)} ? 'ZİMMET TALEBİ' : 'İADE TALEBİ'"></span>
+          </td>
+          <td>
+            <span class="badge badge-pending" th:text="${r.status}"></span>
+          </td>
+          <td style="text-align: center;">
+            <div style="display: inline-flex;">
+              <form th:action="@{/requests/approve/{id}(id=${r.id})}" method="post">
+                <button type="submit" class="btn-action btn-approve">
+                  <i class="fa-solid fa-check"></i> Onayla
+                </button>
+              </form>
+              <form th:action="@{/requests/reject/{id}(id=${r.id})}" method="post">
+                <button type="submit" class="btn-action btn-reject">
+                  <i class="fa-solid fa-xmark"></i> Reddet
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <tr id="jsNoRequestsRow" style="display: none;">
+          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 30px;">
+            <i class="fa-solid fa-magnifying-glass" style="font-size: 18px; margin-bottom: 8px; display: block;"></i>
+            Aradığınız kriterlere uygun onay bekleyen talep bulunamadı.
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(pendingRequests)}" id="thymeleafNoRequestRow">
+          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 30px;">
+            <i class="fa-solid fa-circle-info" style="font-size: 18px; margin-bottom: 8px; display: block;"></i>
+            Şu anda onay bekleyen herhangi bir zimmet veya iade talebi bulunmuyor.
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  function filterRequestsTable() {
+      var userQuery = document.getElementById("userFilterInput").value.toLowerCase().trim();
+      var itemQuery = document.getElementById("itemFilterInput").value.toLowerCase().trim();
+      var dateQuery = document.getElementById("dateFilterInput").value;
+
+      var rows = document.querySelectorAll(".request-row");
+      var visibleCount = 0;
+
+      rows.forEach(function(row) {
+          var personelText = row.getAttribute("data-personel").toLowerCase();
+          var urunText = row.getAttribute("data-urun").toLowerCase();
+          var dateText = row.getAttribute("data-date");
+
+          var matchesUser = personelText.includes(userQuery);
+          var matchesItem = urunText.includes(itemQuery);
+          var matchesDate = (dateQuery === "" || dateText.includes(dateQuery));
+
+          if (matchesUser && matchesItem && matchesDate) {
+              row.style.display = "";
+              visibleCount++;
+          } else {
+              row.style.display = "none";
+          }
+      });
+
+      var jsAlertRow = document.getElementById("jsNoRequestsRow");
+      var tmNoRequestRow = document.getElementById("thymeleafNoRequestRow");
+
+      if (jsAlertRow && !tmNoRequestRow) {
+          jsAlertRow.style.display = (visibleCount === 0) ? "" : "none";
+      }
+  }
+
+  var successMsg = [[${successMessage}]];
+  var errorMsg = [[${errorMessage}]];
+  var toast = document.getElementById("dynamicToast");
+  if(successMsg){
+      document.getElementById("toastIcon").className = "fa-solid fa-circle-check";
+      document.getElementById("toastMessage").innerText = successMsg;
+      toast.className = "toast-notification toast-success show";
+      setTimeout(() => toast.classList.remove("show"), 3500);
+  } else if(errorMsg){
+      document.getElementById("toastIcon").className = "fa-solid fa-triangle-exclamation";
+      document.getElementById("toastMessage").innerText = errorMsg;
+      toast.className = "toast-notification toast-error show";
+      setTimeout(() => toast.classList.remove("show"), 3500);
+  }
+  /*]]>*/
+</script>
+</body>
+</html>

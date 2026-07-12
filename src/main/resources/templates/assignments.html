@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Beta Teknoloji - Tüm Zimmet Kayıtları</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+        .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+        .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; transition: .2s; font-size: 15px; font-weight: 500; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+        .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-logout:hover { background-color: #dc2626; }
+        .main-content { flex: 1; padding: 25px; display: grid; grid-template-columns: 380px 1fr; gap: 20px; overflow: hidden; }
+        .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden; }
+        .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: #1e293b; font-weight: 700; shrink: 0; }
+        .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .scroll-area::-webkit-scrollbar { width: 5px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+        .movements-filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: grid; grid-template-columns: 1.5fr 1.5fr 1fr; gap: 12px; shrink: 0; }
+        .filter-input-group { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .filter-input-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-input-group i { position: absolute; left: 10px; top: 28px; color: #94a3b8; font-size: 12px; }
+        .filter-input-group input { width: 100%; padding: 6px 10px 6px 28px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background: white; }
+        .filter-input-group input:focus { border-color: #3b82f6; }
+
+        .form-toggle-btn { background: #3b82f6; color: white; border: none; padding: 13px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-bottom: 10px; text-align: left; display: flex; align-items: center; justify-content: space-between; font-size: 14px; outline: none; }
+        .form-toggle-btn:hover { background: #2563eb; }
+        .form-box { display: none; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .form-content { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .form-content form { display: flex; flex-direction: column; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+        .form-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background: white; }
+        .btn-submit { background: #10b981; color: white; border: none; padding: 11px; border-radius: 5px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-submit:hover { background: #059669; }
+
+        /* YENİ: Departman Filtre Select Alanı Tasarım Uyum Şeridi */
+        .dept-filter-wrapper { margin-bottom: 4px; display: flex; flex-direction: column; gap: 4px; }
+        .dept-filter-wrapper select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 12px; outline: none; background: #ffffff; color: #334155; font-weight: 500; }
+        .dept-filter-wrapper select:focus { border-color: #3b82f6; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+        th { background: #f8fafc; color: #64748b; position: sticky; top: 0; z-index: 5; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-approved { background: #dcfce7; color: #15803d; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-zimmet { background: #dbeafe; color: #1d4ed8; }
+        .badge-iade { background: #fef3c7; color: #b45309; }
+        .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; z-index: 9999; transition: right .4s; }
+        .toast-notification.show { right: 20px; }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div id="dynamicToast" class="toast-notification">
+    <i id="toastIcon" class="fa-solid"></i>
+    <span id="toastMessage">Bildirim</span>
+</div>
+
+<div class="sidebar">
+    <div>
+        <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+            <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+            <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+            <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+            <li><a th:href="@{/assignments}" class="active"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+            <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+            <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+        </ul>
+    </div>
+
+    <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+    <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+        <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+    </button>
+</div>
+
+<div class="main-content">
+    <div class="panel">
+        <h3><i class="fa-solid fa-file-invoice"></i> Talep Operasyonları</h3>
+        <div class="scroll-area">
+
+            <button class="form-toggle-btn" onclick="toggleForm('assignForm')">
+                <span><i class="fa-solid fa-user-plus"></i> Yeni Zimmet Atama Talebi</span>
+                <i class="fa-solid fa-chevron-down" id="assignForm-icon"></i>
+            </button>
+            <div id="assignForm" class="form-box">
+                <div class="form-content">
+                    <form th:action="@{/assignments/assign-request}" method="post">
+                        <div class="form-group">
+                            <label>Personel Departman Filtresi:</label>
+                            <div class="dept-filter-wrapper">
+                                <select onchange="filterUserSelectByDept(this, 'assignUserSelect')">
+                                    <option value="">Tüm Departmanları Göster</option>
+                                    <option value="Bilgi Teknolojileri">Bilgi Teknolojileri</option>
+                                    <option value="İnsan Kaynakları">İnsan Kaynakları</option>
+                                    <option value="Muhasebe">Muhasebe</option>
+                                    <option value="Satın Alma">Satın Alma</option>
+                                    <option value="Pazarlama">Pazarlama</option>
+                                    <option value="Operasyon">Operasyon</option>
+                                </select>
+                            </div>
+
+                            <label style="margin-top: 8px;">Personel Seçiniz:</label>
+                            <select name="userId" id="assignUserSelect" required>
+                                <option value="" disabled selected>Seçim Yapın...</option>
+                                <option th:each="u : ${users}" th:value="${u.id}" th:text="${u.fullName}" th:data-dept="${u.department}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>Zimmetlenecek Ürün:</label>
+                            <select name="productId" required>
+                                <option value="" disabled selected>Seçim Yapın...</option>
+                                <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.brand} + ' ' + ${p.modelName}"></option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-submit">Onay Talebi Oluştur</button>
+                    </form>
+                </div>
+            </div>
+
+            <button class="form-toggle-btn" style="background:#f59e0b;" onclick="toggleForm('returnForm')">
+                <span><i class="fa-solid fa-rotate-left"></i> Ürünü İade Al Talebi</span>
+                <i class="fa-solid fa-chevron-down" id="returnForm-icon"></i>
+            </button>
+            <div id="returnForm" class="form-box">
+                <div class="form-content">
+                    <form th:action="@{/assignments/return-request}" method="post">
+                        <div class="form-group">
+                            <label>Personel Departman Filtresi:</label>
+                            <div class="dept-filter-wrapper">
+                                <select onchange="filterUserSelectByDept(this, 'returnUserSelect')">
+                                    <option value="">Tüm Departmanları Göster</option>
+                                    <option value="Bilgi Teknolojileri">Bilgi Teknolojileri</option>
+                                    <option value="İnsan Kaynakları">İnsan Kaynakları</option>
+                                    <option value="Muhasebe">Muhasebe</option>
+                                    <option value="Satın Alma">Satın Alma</option>
+                                    <option value="Pazarlama">Pazarlama</option>
+                                    <option value="Operasyon">Operasyon</option>
+                                </select>
+                            </div>
+
+                            <label style="margin-top: 8px;">Personel Seçiniz:</label>
+                            <select name="userId" id="returnUserSelect" required onchange="loadUserProducts(this.value)">
+                                <option value="" disabled selected>Seçim Yapın...</option>
+                                <option th:each="u : ${users}" th:value="${u.id}" th:text="${u.fullName}" th:data-dept="${u.department}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>İade Alınacak Cihaz:</label>
+                            <select name="productId" id="returnProductId" required>
+                                <option value="" disabled selected>Örn: Önce Personel Seçiniz...</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-submit" style="background:#d97706;">İade Talebi Oluştur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Sonuçlanmış Zimmet Hareket Akışı</h3>
+
+        <div class="movements-filter-box">
+            <div class="filter-input-group">
+                <label for="moveUserSearch">Personel Süzgeci</label>
+                <i class="fa-solid fa-user-gear"></i>
+                <input type="text" id="moveUserSearch" onkeyup="filterMovementsTable()" placeholder="Personel ad soyad yazın...">
+            </div>
+            <div class="filter-input-group">
+                <label for="moveItemSearch">Ürün Bilgisi</label>
+                <i class="fa-solid fa-laptop-code"></i>
+                <input type="text" id="moveItemSearch" onkeyup="filterMovementsTable()" placeholder="Marka veya model arayın...">
+            </div>
+            <div class="filter-input-group">
+                <label for="moveDateSearch">İşlem Tarihi</label>
+                <i class="fa-solid fa-calendar-day"></i>
+                <input type="date" id="moveDateSearch" onchange="filterMovementsTable()">
+            </div>
+        </div>
+
+        <div class="scroll-area">
+            <table id="movementsTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Personel Bilgisi</th>
+                    <th>Ürün / Envanter Bilgisi</th>
+                    <th>İşlem Tarihi</th>
+                    <th>Hareket Tipi</th>
+                    <th>Durum</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${movements}"
+                    class="movement-data-row"
+                    th:data-personel="${m.personelInfo}"
+                    th:data-urun="${m.urunInfo}"
+                    th:data-date="${m.createdAt}">
+                    <td th:text="${m.id}" style="color: #64748b; font-weight: 600;"></td>
+                    <td th:text="${m.personelInfo}"></td>
+                    <td th:text="${m.urunInfo}"></td>
+                    <td th:text="${m.createdAt}"></td>
+                    <td>
+                        <span th:class="${'ZIMMET'.equalsIgnoreCase(m.movementType)} ? 'badge badge-zimmet' : 'badge badge-iade'"
+                              th:text="${'ZIMMET'.equalsIgnoreCase(m.movementType)} ? 'ZİMMET' : 'İADE'"></span>
+                    </td>
+                    <td>
+                        <span th:class="${'APPROVED'.equalsIgnoreCase(m.status)} ? 'badge badge-approved' : 'badge badge-rejected'"
+                              th:text="${m.status}"></span>
+                    </td>
+                </tr>
+                <tr id="jsNoMovementsRow" style="display: none;">
+                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 25px;">
+                        <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 18px; margin-bottom: 8px; display: block;"></i>
+                        Seçilen kriterlere uygun sonuçlanmış hareket kaydı bulunamadı.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // 🚨 YENİ: Seçilen Departmana Göre Personel Opsiyonlarını Anlık Süzme Fonksiyonu
+    // Thymeleaf'ten gelen her personelin 'data-dept' özniteliğini okur ve anında eler.
+    function filterUserSelectByDept(selectElement, targetUserSelectId) {
+        var selectedDept = selectElement.value; // Seçilen departman string değeri
+        var userSelect = document.getElementById(targetUserSelectId);
+        if (!userSelect) return;
+
+        var options = userSelect.options;
+        var firstVisibleFound = false;
+
+        for (var i = 0; i < options.length; i++) {
+            // "Seçim Yapın..." opsiyonuna dokunma
+            if (options[i].value === "") continue;
+
+            var userDept = options[i].getAttribute("data-dept") || "";
+
+            if (selectedDept === "" || userDept === selectedDept) {
+                options[i].style.display = "";
+                if (!firstVisibleFound) {
+                    // Kullanıcı deneyimi için filtrelenen ilk uygun personeli otomatik seçtirir
+                    userSelect.value = options[i].value;
+                    firstVisibleFound = true;
+                }
+            } else {
+                options[i].style.display = "none";
+            }
+        }
+
+        // Eğer seçilen departmanda hiç adam yoksa seçimi sıfırla
+        if (!firstVisibleFound) {
+            userSelect.value = "";
+        }
+
+        // Eğer iade formu tetiklendiyse anlık cihaz listesini de tetiklemesi için onchange eventini çağırıyoruz
+        if (targetUserSelectId === 'returnUserSelect' && typeof loadUserProducts === "function") {
+            loadUserProducts(userSelect.value);
+        }
+    }
+
+    function filterMovementsTable() {
+        var userQuery = document.getElementById("moveUserSearch").value.toLowerCase().trim();
+        var itemQuery = document.getElementById("moveItemSearch").value.toLowerCase().trim();
+        var dateQuery = document.getElementById("moveDateSearch").value;
+
+        var rows = document.querySelectorAll(".movement-data-row");
+        var visibleCount = 0;
+
+        rows.forEach(function(row) {
+            var pText = row.getAttribute("data-personel").toLowerCase();
+            var uText = row.getAttribute("data-urun").toLowerCase();
+            var dText = row.getAttribute("data-date");
+
+            var matchesUser = pText.includes(userQuery);
+            var matchesItem = uText.includes(itemQuery);
+            var matchesDate = (dateQuery === "" || dText.includes(dateQuery));
+
+            if (matchesUser && matchesItem && matchesDate) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        var alertRow = document.getElementById("jsNoMovementsRow");
+        if (alertRow) {
+            alertRow.style.display = (visibleCount === 0) ? "" : "none";
+        }
+    }
+
+    function toggleForm(formId) {
+        const targetForm = document.getElementById(formId);
+        const targetIcon = document.getElementById(formId + "-icon");
+        document.querySelectorAll('.form-box').forEach(box => { if(box.id !== formId) box.style.display = "none"; });
+        document.querySelectorAll('[id$="-icon"]').forEach(icon => { if(icon.id !== formId + "-icon") { icon.classList.remove("fa-chevron-up"); icon.classList.add("fa-chevron-down"); } });
+        if(targetForm.style.display === "block"){
+            targetForm.style.display = "none";
+            targetIcon.classList.remove("fa-chevron-up");
+            targetIcon.classList.add("fa-chevron-down");
+        }else{
+            targetForm.style.display = "block";
+            targetIcon.classList.remove("fa-chevron-down");
+            targetIcon.classList.add("fa-chevron-up");
+        }
+    }
+
+    function loadUserProducts(userId) {
+        const productSelect = document.getElementById("returnProductId");
+        productSelect.innerHTML = '<option value="" disabled selected>Cihazlar sorgulanıyor...</option>';
+        if(!userId) return;
+
+        fetch('/assignments/user-products/' + userId)
+            .then(response => response.json())
+            .then(products => {
+                productSelect.innerHTML = '';
+                if(products.length === 0) {
+                    productSelect.innerHTML = '<option value="" disabled selected>Bu personelin üzerinde aktif zimmet yok!</option>';
+                    return;
+                }
+                products.forEach(function(p) {
+                    const option = document.createElement("option");
+                    option.value = p.id;
+                    option.text = p.brand + " " + p.modelName + " (ID: " + p.id + ")";
+                    productSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Hata:", error);
+                productSelect.innerHTML = '<option value="" disabled selected>Hata: Liste alınamadı!</option>';
+            });
+    }
+
+    var successMsg = [[${successMessage}]];
+    var errorMsg = [[${errorMessage}]];
+    var toast = document.getElementById("dynamicToast");
+    if(successMsg){
+        document.getElementById("toastIcon").className = "fa-solid fa-circle-check";
+        document.getElementById("toastMessage").innerText = successMsg;
+        toast.className = "toast-notification toast-success show";
+        setTimeout(() => toast.classList.remove("show"), 3500);
+    } else if(errorMsg){
+        document.getElementById("toastIcon").className = "fa-solid fa-triangle-exclamation";
+        document.getElementById("toastMessage").innerText = errorMsg;
+        toast.className = "toast-notification toast-error show";
+        setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

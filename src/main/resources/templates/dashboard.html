@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Teknoloji - Yönetici Paneli</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { display: flex; background-color: #f4f6f9; color: #333; height: 100vh; overflow: hidden; }
+
+        /* STANDARTLAŞTIRILMIŞ SOL PANEL (SIDEBAR) - %100 UYUMLU GÖRÜNÜM */
+        .sidebar { width: 280px; background-color: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+        .sidebar-brand h2 { font-size: 22px; color: #38bdf8; letter-spacing: -0.5px; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+        .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+        .sidebar-menu a.active, .sidebar-menu a:hover { background-color: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+
+        /* Standartlaştırılmış Güvenli Çıkış Butonu */
+        .btn-logout { background-color: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; }
+        .btn-logout:hover { background-color: #dc2626; }
+
+        /* Sağ Ana İçerik Alanı */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; }
+
+        /* Üst Header Bilgi Şeridi */
+        .top-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 25px 35px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
+        .user-welcome h1 { font-size: 24px; color: #1e1b4b; font-weight: 700; }
+        .user-welcome span { font-weight: 500; color: #4b5563; font-size: 15px; margin-top: 4px; display: block; }
+        .date-info { font-weight: 600; color: #1e293b; font-size: 15px; background: #f1f5f9; padding: 8px 18px; border-radius: 20px; border: 1px solid #e2e8f0; }
+
+        /* 4'lü İstatistik Kartları */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .stat-card { background: white; padding: 30px 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px; border-top: 4px solid #3b82f6; }
+        .stat-card.purple { border-top-color: #8b5cf6; }
+        .stat-card.green { border-top-color: #10b981; }
+        .stat-card.amber { border-top-color: #f59e0b; }
+        .stat-card h3 { font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #1e293b; }
+
+        /* Alt Durum Panelleri */
+        .dashboard-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .info-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 15px; }
+        .info-box h3 { font-size: 18px; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; font-weight: 700; }
+        .status-item { display: flex; justify-content: space-between; font-size: 15px; align-items: center; padding: 5px 0; }
+        .badge-active { background-color: #dcfce7; color: #15803d; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+        .tip-text { font-size: 15px; color: #334155; line-height: 1.7; background: #eff6ff; padding: 20px; border-radius: 8px; border-left: 5px solid #3b82f6; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BETA TEKNOLOJİ</h2>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+            <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+            <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+            <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+            <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+            <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+            <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+        </ul>
+    </div>
+
+    <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+    <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+        <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+    </button>
+</div>
+
+<div class="main-content">
+    <div class="top-header">
+        <div class="user-welcome">
+            <h1>Merhaba, <span th:text="${adminName}">Yönetici</span></h1>
+            <span>Yetki Seviyesi: <strong style="color: #2563eb;">Sistem Yöneticisi</strong></span>
+        </div>
+        <div class="date-info" th:text="${currentDate}">17.05.2026</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Kayıtlı Personel</h3>
+            <div class="value" th:text="${personnelCount} + ' Kişi'">0 Kişi</div>
+        </div>
+        <div class="stat-card purple">
+            <h3>Stoktaki Ürün Miktarı</h3>
+            <div class="value" th:text="${totalStock} + ' Adet'">0 Adet</div>
+        </div>
+        <div class="stat-card green">
+            <h3>Envanter Toplam Değeri</h3>
+            <div class="value" th:text="${#numbers.formatDecimal(totalValue, 1, 'DEFAULT', 2, 'DEFAULT')} + ' ₺'">0.00 ₺</div>
+        </div>
+        <div class="stat-card amber">
+            <h3>Bekleyen Talep</h3>
+            <div class="value" th:text="${pendingRequests} + ' Adet'">0 Adet</div>
+        </div>
+    </div>
+
+    <div class="dashboard-footer-grid">
+        <div class="info-box">
+            <h3>Sistem Durumu</h3>
+            <div class="status-item">
+                <span>Veritabanı Bağlantısı:</span>
+                <span class="badge-active">Aktif</span>
+            </div>
+            <div class="status-item">
+                <span>Uygulama Sunucusu:</span>
+                <span class="badge-active">Aktif</span>
+            </div>
+            <div class="status-item">
+                <span>Yetki Durumu:</span>
+                <span style="font-weight: 600; color: #2563eb;">Yönetici (Admin)</span>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>Hızlı İpucu Alanı</h3>
+            <div class="tip-text">
+                Beta Teknoloji Yönetim Sistemine hoş geldiniz. Personel eklemek, mevcut çalışanları listelemek ve üzerlerindeki aktif zimmetler ile geçmiş iade kayıtlarını detaylıca incelemek için sol menüden <strong>"Personel Yönetimi"</strong> sekmesine geçiş yapabilirsiniz.
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

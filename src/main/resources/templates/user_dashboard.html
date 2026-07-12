@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Beta Teknoloji - Çalışan Portalı</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { display: flex; background-color: #f1f5f9; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; font-weight: 700; letter-spacing: 1px; }
+        .user-profile-badge { background: #1e293b; padding: 20px 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 25px; text-align: center; }
+        .user-profile-badge p { font-size: 15px; font-weight: 600; color: #f8fafc; }
+        .user-profile-badge span { font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; background: #0f172a; padding: 3px 12px; border-radius: 12px; }
+        .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: .2s; }
+        .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: #1e293b; color: white; border-left: 4px solid #38bdf8; }
+        .sidebar-menu a.active { background: #38bdf8; color: #0f172a; font-weight: 600; border-left: none; }
+        .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-logout:hover { background-color: #dc2626; }
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-welcome-bar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; shrink: 0; }
+        .welcome-message h1 { font-size: 20px; color: #0f172a; font-weight: 700; }
+        .welcome-message p { font-size: 13px; color: #64748b; }
+        .live-datetime { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #334155; }
+        .main-content { flex: 1; padding: 25px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,.03); border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; color: #0f172a; font-weight: 700; shrink: 0; }
+        .my-filter-wrapper { display: flex; align-items: center; gap: 20px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; shrink: 0; }
+        .my-filter-wrapper::-webkit-scrollbar { display: none; }
+        .my-filter-group { display: flex; align-items: center; gap: 8px; }
+        .my-filter-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .my-filter-group select { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: white; min-width: 150px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 14px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+        th { background: #f8fafc; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        .btn-inline-return { background: #ea580c; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-inline-return:hover { background: #c2410c; }
+        .badge-active { background: #dcfce7; color: #15803d; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+
+        .badge-admin-assigned { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-user-requested { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+
+        .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; z-index: 9999; transition: right .4s; }
+        .toast-notification.show { right: 20px; }
+        .toast-success { background: #10b981; }
+    </style>
+</head>
+<body>
+<div id="dynamicToast" class="toast-notification"><i id="toastIcon" class="fa-solid"></i><span id="toastMessage">Bildirim</span></div>
+
+<div class="sidebar">
+    <div>
+        <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+        <div class="user-profile-badge">
+            <i class="fa-solid fa-circle-user" style="font-size:40px; color:#38bdf8; margin-bottom:10px; display:block;"></i>
+            <p id="jsActiveUserName" th:text="${user.fullName}"></p>
+            <span th:text="${user.department} + ' Dep.'"></span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/user/dashboard}" class="active"><i class="fa-solid fa-box"></i> Zimmetlerim</a></li>
+            <li><a th:href="@{/user/request}"><i class="fa-solid fa-circle-plus"></i> Yeni Talep Oluştur</a></li>
+            <li><a th:href="@{/user/history}"><i class="fa-solid fa-clock-rotate-left"></i> İade Geçmişim</a></li>
+        </ul>
+    </div>
+
+    <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+    <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+        <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+    </button>
+</div>
+
+<div class="main-wrapper">
+    <div class="top-welcome-bar">
+        <div class="welcome-message">
+            <h1>Mevcut Donanım Listem</h1>
+            <p>Üzerinizde aktif olarak zimmetli bulunan cihazlar listelenmektedir.</p>
+        </div>
+        <div class="live-datetime" id="liveClock">Yükleniyor...</div>
+    </div>
+
+    <div class="main-content">
+        <div class="panel">
+            <h3><i class="fa-solid fa-box-open" style="color:#2563eb;"></i> Üzerimde Aktif Zimmetli Bulunan Donanımlar</h3>
+
+            <div class="my-filter-wrapper">
+                <div class="my-filter-group">
+                    <label for="myTypeFilter">Ürün Tipi:</label>
+                    <select id="myTypeFilter" onchange="filterMyAssignmentsTable()">
+                        <option value="">Tüm Tipler</option>
+                    </select>
+                </div>
+                <div class="my-filter-group">
+                    <label for="myBrandFilter">Marka:</label>
+                    <select id="myBrandFilter" onchange="filterMyAssignmentsTable()">
+                        <option value="">Tüm Markalar</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="scroll-area">
+                <table id="myAssignmentsTable">
+                    <thead>
+                    <tr>
+                        <th>Marka</th>
+                        <th>Model Adı</th>
+                        <th>Tipi</th>
+                        <th>Teknik Özellik / Detay</th>
+                        <th>Zimmet Kaynağı</th>
+                        <th>Zimmet Durumu</th>
+                        <th style="text-align: center; width: 150px;">Eylemler</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${myActiveProducts}" class="my-prod-row" th:data-type="${p.productType}" th:data-brand="${p.brand}">
+                        <td th:text="${p.brand}" style="font-weight: 600;"></td>
+                        <td th:text="${p.modelName}"></td>
+                        <td th:text="${p.productType}"></td>
+                        <td th:text="${p.specifications}"></td>
+                        <td>
+                            <span th:if="${'APPROVED_BY_ADMIN'.equalsIgnoreCase(p.stockStatus)}" class="badge-admin-assigned">
+                                <i class="fa-solid fa-user-shield"></i> Yönetici Ataması
+                            </span>
+                            <span th:unless="${'APPROVED_BY_ADMIN'.equalsIgnoreCase(p.stockStatus)}" class="badge-user-requested">
+                                <i class="fa-solid fa-user"></i> Kişisel Talep
+                            </span>
+                        </td>
+                        <td><span class="badge-active">ZİMMETLİ</span></td>
+                        <td style="text-align: center;">
+                            <form th:action="@{/user/request-item}" method="post" th:onsubmit="return confirmReturnInline(this, [[${p.brand} + ' ' + ${p.modelName}]])">
+                                <input type="hidden" name="productId" th:value="${p.id}">
+                                <input type="hidden" name="movementType" value="IADE">
+                                <button type="submit" class="btn-inline-return"><i class="fa-solid fa-rotate-left"></i> İade Et</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(myActiveProducts)}" id="noDataRow">
+                        <td colspan="7" style="text-align: center; color: #94a3b8; padding: 50px;">Üzerinizde zimmetli cihaz bulunmamaktadır.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function updateLiveDateTime() {
+        const now = new Date();
+        document.getElementById('liveClock').innerHTML = `<i class="fa-regular fa-calendar-days"></i> ${now.toLocaleDateString('tr-TR', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} | <i class="fa-regular fa-clock"></i> ${now.toLocaleTimeString('tr-TR')}`;
+    }
+    setInterval(updateLiveDateTime, 1000); updateLiveDateTime();
+
+    window.addEventListener("DOMContentLoaded", function() {
+        var typeFilter = document.getElementById("myTypeFilter");
+        var brandFilter = document.getElementById("myBrandFilter");
+        var rows = document.querySelectorAll(".my-prod-row");
+
+        var types = new Set();
+        var brands = new Set();
+
+        rows.forEach(row => {
+            var t = row.getAttribute("data-type");
+            var b = row.getAttribute("data-brand");
+            if(t) types.add(t.trim());
+            if(b) brands.add(b.trim());
+        });
+
+        types.forEach(t => { var opt = document.createElement("option"); opt.value = t; opt.text = t; typeFilter.appendChild(opt); });
+        brands.forEach(b => { var opt = document.createElement("option"); opt.value = b; opt.text = b; brandFilter.appendChild(opt); });
+    });
+
+    function filterMyAssignmentsTable() {
+        var selectedType = document.getElementById("myTypeFilter").value;
+        var selectedBrand = document.getElementById("myBrandFilter").value;
+        var rows = document.querySelectorAll(".my-prod-row");
+
+        rows.forEach(row => {
+            var t = row.getAttribute("data-type");
+            var b = row.getAttribute("data-brand");
+
+            var matchType = (selectedType === "" || t === selectedType);
+            var matchBrand = (selectedBrand === "" || b === selectedBrand);
+
+            row.style.display = (matchType && matchBrand) ? "" : "none";
+        });
+    }
+
+    function confirmReturnInline(form, productName) {
+        return confirm("Sayın " + document.getElementById("jsActiveUserName").innerText + ",\n\n" + productName + " cihazı için İADE TALEBİ oluşturmak istediğinize emin misiniz?");
+    }
+
+    var successMsg = [[${successMessage}]];
+    var toast = document.getElementById("dynamicToast");
+    if(successMsg){
+        document.getElementById("toastIcon").className = "fa-solid fa-circle-check";
+        document.getElementById("toastMessage").innerText = successMsg;
+        toast.className = "toast-notification toast-success show";
+        setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

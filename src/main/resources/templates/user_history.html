@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - İade Geçmişi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f1f5f9; height: 100vh; overflow: hidden; }
+    .sidebar { width: 280px; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; font-weight: 700; letter-spacing: 1px; }
+    .user-profile-badge { background: #1e293b; padding: 20px 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 25px; text-align: center; }
+    .user-profile-badge p { font-size: 15px; font-weight: 600; color: #f8fafc; }
+    .user-profile-badge span { font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; background: #0f172a; padding: 3px 12px; border-radius: 12px; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: .2s; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a:hover, .sidebar-menu a.active { background: #1e293b; color: white; border-left: 4px solid #38bdf8; }
+    .sidebar-menu a.active { background: #38bdf8; color: #0f172a; font-weight: 600; border-left: none; }
+    .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background-color: #dc2626; }
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .top-welcome-bar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; shrink: 0; }
+    .welcome-message h1 { font-size: 20px; color: #0f172a; font-weight: 700; }
+    .welcome-message p { font-size: 13px; color: #64748b; }
+    .main-content { flex: 1; padding: 25px; display: flex; flex-direction: column; overflow: hidden; }
+    .panel { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,.03); border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; color: #0f172a; font-weight: 700; shrink: 0; }
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 14px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+    tbody tr:hover { background-color: #f8fafc; }
+    .badge-success-return { background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+
+    .badge-admin-action { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+    .badge-user-action { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <div>
+    <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+    <div class="user-profile-badge">
+      <i class="fa-solid fa-circle-user" style="font-size:40px; color:#38bdf8; margin-bottom:10px; display:block;"></i>
+      <p th:text="${user.fullName}"></p>
+      <span th:text="${user.department} + ' Dep.'"></span>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/user/dashboard}"><i class="fa-solid fa-box"></i> Zimmetlerim</a></li>
+      <li><a th:href="@{/user/request}"><i class="fa-solid fa-circle-plus"></i> Yeni Talep Oluştur</a></li>
+      <li><a th:href="@{/user/history}" class="active"><i class="fa-solid fa-clock-rotate-left"></i> İade Geçmişim</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-wrapper">
+  <div class="top-welcome-bar">
+    <div class="welcome-message">
+      <h1>İade Geçmişi Arşivi</h1>
+      <p>Geçmişte başarıyla tamamladığınız ve depoya iade ettiğiniz donanımların tüm detayları.</p>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="panel">
+      <h3><i class="fa-solid fa-clock-rotate-left" style="color:#10b981;"></i> Başarıyla Tamamlanmış İade Geçmişim</h3>
+      <div class="scroll-area">
+        <table>
+          <thead>
+          <tr>
+            <th>İade Edilen Ürün</th>
+            <th>Donanım Tipi</th>
+            <th>Birim Fiyatı</th>
+            <th>Teknik Özellikler</th>
+            <th>İşlem Tipi</th>
+            <th>İşlem Tarihi</th>
+            <th>İşlem Sonucu</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="past : ${approvedReturns}">
+            <td th:text="${productService.getProductById(past.productId) != null} ? (${productService.getProductById(past.productId).brand} + ' ' + ${productService.getProductById(past.productId).modelName}) : 'Bilinmeyen Cihaz'" style="font-weight: 600;"></td>
+            <td th:text="${productService.getProductById(past.productId) != null} ? ${productService.getProductById(past.productId).productType} : 'DONANIM'"></td>
+            <td th:text="${productService.getProductById(past.productId) != null} ? (${#numbers.formatDecimal(productService.getProductById(past.productId).price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' TL') : '-'"></td>
+            <td th:text="${productService.getProductById(past.productId) != null ? productService.getProductById(past.productId).specifications : '-'}" style="color:#64748b;"></td>
+            <td>
+                <span th:if="${'APPROVED_BY_ADMIN'.equalsIgnoreCase(past.status)}" class="badge-admin-action">
+                    <i class="fa-solid fa-user-shield"></i> Yönetici İadesi
+                </span>
+              <span th:unless="${'APPROVED_BY_ADMIN'.equalsIgnoreCase(past.status)}" class="badge-user-action">
+                    <i class="fa-solid fa-user"></i> Şahsi İade
+                </span>
+            </td>
+            <td th:text="${past.createdAt}"></td>
+            <td><span class="badge-success-return"><i class="fa-solid fa-circle-check"></i> Depoya İade Alındı</span></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(approvedReturns)}">
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 40px;">Onaylanmış geçmiş bir iade kaydınız bulunmamaktadır.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

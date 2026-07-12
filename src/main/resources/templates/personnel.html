@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Beta Teknoloji - Personel Yönetimi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; position: relative; }
+
+        /* STANDARTLAŞTIRILMIŞ SOL PANEL (SIDEBAR) */
+        .sidebar { width: 280px; background-color: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+        .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+        .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+        .sidebar-menu a.active, .sidebar-menu a:hover { background-color: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+
+        /* Güvenli Çıkış Butonu */
+        .btn-logout { background-color: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; }
+        .btn-logout:hover { background-color: #dc2626; }
+
+        /* Main Layout */
+        .main-content { flex: 1; padding: 25px; display: grid; grid-template-columns: 450px 1fr; gap: 20px; height: 100vh; overflow: hidden; }
+
+        .panel { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; padding: 20px; }
+        .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; color: #1e293b; }
+
+        /* FİLTRELEME BARI STİLLERİ */
+        .search-filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .search-input-wrapper { position: relative; width: 100%; }
+        .search-input-wrapper i { position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 13px; }
+        .search-input-wrapper input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; }
+        .search-input-wrapper input:focus { border-color: #3b82f6; }
+
+        /* Çiftli Filtre Seçim Alanı Grid Yapısı */
+        .filter-selectors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .filter-select-wrapper select { width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background-color: white; }
+        .filter-select-wrapper select:focus { border-color: #3b82f6; }
+
+        /* Scrollable */
+        .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .scroll-area::-webkit-scrollbar { width: 5px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+        /* Collapsible Form */
+        .form-toggle-btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-bottom: 10px; }
+        .form-box { max-height: 0; overflow: hidden; transition: 0.3s ease-out; background: #f8fafc; border-radius: 8px; }
+        .form-box.open { max-height: 600px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .form-box { max-height: 0; overflow: hidden; transition: 0.3s ease-out; background: #f8fafc; border-radius: 8px; }
+        .form-box.open { max-height: 600px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .form-group { margin-bottom: 10px; display: flex; align-items: center; }
+        .form-group label { width: 100px; font-size: 13px; font-weight: 600; color: #475569; }
+        .form-group input, .form-group select { flex: 1; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; background-color: white; }
+
+        /* Personnel Card */
+        .per-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; position: relative; transition: 0.2s; }
+        .per-card:hover { border-color: #3b82f6; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .per-card.selected { border-left: 5px solid #3b82f6; background-color: #eff6ff; }
+
+        .per-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding-right: 25px; }
+        .per-name { font-weight: 700; color: #0f172a; font-size: 14px; }
+        .per-id-badge { background-color: #e2e8f0; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+        .per-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; color: #64748b; }
+        .per-info-grid i { color: #3b82f6; width: 16px; }
+
+        .delete-icon { position: absolute; top: 12px; right: 12px; color: #ef4444; font-size: 20px; transition: 0.2s; padding: 3px; display: flex; align-items: center; justify-content: center; }
+        .delete-icon:hover { color: #b91c1c; transform: scale(1.25); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        th { background: #f8fafc; color: #64748b; }
+
+        /* Toast Notification */
+        .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; z-index: 9999; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-notification.show { right: 20px; }
+        .toast-notification i { font-size: 18px; }
+        .toast-success { background-color: #10b981; }
+        .toast-error { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div id="dynamicToast" class="toast-notification">
+    <i id="toastIcon" class="fa-solid"></i>
+    <span id="toastMessage">Bildirim mesajı</span>
+</div>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BETA TEKNOLOJİ</h2>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+            <li><a th:href="@{/personnel}" class="active"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+            <li><a th:href="@{/inventory}"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+            <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+            <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+            <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+            <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+        </ul>
+    </div>
+
+    <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+    <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+        <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+    </button>
+</div>
+
+<div class="main-content">
+    <div class="panel">
+        <h3>Personel İşlemleri</h3>
+
+        <button class="form-toggle-btn" onclick="document.getElementById('addForm').classList.toggle('open')">
+            <i class="fa-solid fa-user-plus"></i> Yeni Personel Kaydı
+        </button>
+
+        <div id="addForm" class="form-box">
+            <form th:action="@{/personnel/save}" method="post">
+                <input type="hidden" name="roleId" value="2">
+                <div class="form-group"><label>Ad:</label><input type="text" name="firstName" required></div>
+                <div class="form-group"><label>Soyad:</label><input type="text" name="lastName" required></div>
+                <div class="form-group">
+                    <label>Departman:</label>
+                    <select name="department">
+                        <option value="Bilgi Teknolojileri">Bilgi Teknolojileri</option>
+                        <option value="İnsan Kaynakları">İnsan Kaynakları</option>
+                        <option value="Muhasebe">Muhasebe</option>
+                        <option value="Satın Alma">Satın Alma</option>
+                        <option value="Pazarlama">Pazarlama</option>
+                        <option value="Operasyon">Operasyon</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Oda No:</label>
+                    <select name="roomNumber">
+                        <option value="B-01">B-01 (Zemin Kat)</option>
+                        <option value="B-02">B-02 (Zemin Kat)</option>
+                        <option value="B-03">B-03 (Zemin Kat)</option>
+                        <option value="B-101">B-101 (1. Kat)</option>
+                        <option value="B-102">B-102 (1. Kat)</option>
+                        <option value="B-103">B-103 (1. Kat)</option>
+                        <option value="B-201">B-201 (2. Kat)</option>
+                        <option value="B-202">B-202 (2. Kat)</option>
+                        <option value="A-01">A-01 (Zemin Kat)</option>
+                        <option value="A-101">A-101 (1. Kat)</option>
+                        <option value="A-201">A-201 (2. Kat)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Telefon:</label><input type="text" name="phone"></div>
+                <div class="form-group"><label>Kullanıcı Adı:</label><input type="text" name="username" required></div>
+                <div class="form-group"><label>Şifre:</label><input type="password" name="password" required></div>
+                <button type="submit" class="btn-save" style="background:#10b981; margin:0; border:none; color:white; padding:10px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">OK / Kaydet</button>
+            </form>
+        </div>
+
+        <div class="search-filter-box">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="perSearchInput" onkeyup="filterPersonnelList()" placeholder="Personel adı veya kullanıcı adı ara...">
+            </div>
+
+            <div class="filter-selectors-grid">
+                <div class="filter-select-wrapper">
+                    <select id="perDeptFilter" onchange="filterPersonnelList()">
+                        <option value="">Tüm Departmanlar</option>
+                        <option value="Bilgi Teknolojileri">Bilgi Teknolojileri</option>
+                        <option value="İnsan Kaynakları">İnsan Kaynakları</option>
+                        <option value="Muhasebe">Muhasebe</option>
+                        <option value="Satın Alma">Satın Alma</option>
+                        <option value="Pazarlama">Pazarlama</option>
+                        <option value="Operasyon">Operasyon</option>
+                    </select>
+                </div>
+                <div class="filter-select-wrapper">
+                    <select id="perSortFilter" onchange="executePersonnelSortFilter()">
+                        <option value="ASC">İsim (A - Z) ↑</option>
+                        <option value="DESC">İsim (Z - A) ↓</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-area" id="personnelScrollArea">
+            <div th:each="per : ${personnelList}"
+                 th:data-dept="${per.department}"
+                 th:data-name="${per.firstName} + ' ' + ${per.lastName} + ' ' + ${per.username}"
+                 th:data-purename="${per.firstName} + ' ' + ${per.lastName}"
+                 th:classappend="${selectedUser != null && selectedUser.id == per.id} ? 'selected' : ''"
+                 class="per-card" th:onclick="'saveScrollPosition(); location.href=\'' + @{/personnel(selectedUserId=${per.id})} + '\''">
+
+                <div class="per-header-row">
+                    <div class="per-name" th:text="${per.firstName} + ' ' + ${per.lastName}">Ad Soyad</div>
+                    <div class="per-id-badge" th:text="'ID: ' + ${per.id}">ID: 0</div>
+                </div>
+
+                <div class="per-info-grid">
+                    <div><i class="fa-solid fa-building"></i> <span th:text="${per.department}"></span></div>
+                    <div><i class="fa-solid fa-door-open"></i> Oda: <span th:text="${per.roomNumber}"></span></div>
+                    <div><i class="fa-solid fa-phone"></i> <span th:text="${per.phone}"></span></div>
+                    <div><i class="fa-solid fa-user"></i> <span th:text="${per.username}"></span></div>
+                </div>
+
+                <a th:href="@{/personnel/delete/{id}(id=${per.id})}" class="delete-icon"
+                   onclick="event.stopPropagation(); return confirm('Bu personeli silmek istediğinize emin misiniz?');">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div th:if="${selectedUser != null}">
+            <h3 th:text="${selectedUser.firstName} + ' ' + ${selectedUser.lastName} + ' (ID: ' + ${selectedUser.id} + ') - Detaylı Envanter Bilançosu'">Detay</h3>
+
+            <div class="scroll-area">
+                <p style="font-weight:700; color:#1e3a8a; margin-bottom:10px;"><i class="fa-solid fa-box-open"></i> Mevcut Aktif Zimmetler</p>
+                <table th:if="${not #lists.isEmpty(activeProductIds)}">
+                    <thead>
+                    <tr><th>Marka / Model</th><th>Miktar</th><th>Durum</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="pId : ${activeProductIds}">
+                        <td th:text="${productService.getProductById(pId) != null} ?
+                                             (${productService.getProductById(pId).brand} + ' ' + ${productService.getProductById(pId).modelName}) :
+                                             'Cihaz ID: ' + ${pId}">Ürün</td>
+                        <td>1</td>
+                        <td><span style="color:#16a34a; font-weight:600">Zimmetli</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p th:if="${#lists.isEmpty(activeProductIds)}" style="font-size:12px; color:#64748b; margin-bottom:20px;">Aktif zimmet kaydı yok.</p>
+
+                <p style="font-weight:700; color:#16a34a; margin-top:20px; margin-bottom:10px;"><i class="fa-solid fa-clock-rotate-left"></i> Tamamlanmış İadeler</p>
+                <table th:if="${not #lists.isEmpty(approvedReturns)}">
+                    <thead>
+                    <tr><th>İade Edilen Ürün</th><th>Tip</th><th>Sonuç</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="past : ${approvedReturns}">
+                        <td th:text="${productService.getProductById(past.productId) != null} ?
+                                             (${productService.getProductById(past.productId).brand} + ' ' + ${productService.getProductById(past.productId).modelName}) :
+                                             'Cihaz ID: ' + ${past.productId}">Ürün</td>
+                        <td>IADE</td>
+                        <td><span style="color:#16a34a; font-weight:600">Başarıyla İade Alındı</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p th:if="${#lists.isEmpty(approvedReturns)}" style="font-size:12px; color:#64748b;">Onaylanmış iade geçmişi bulunmuyor.</p>
+            </div>
+        </div>
+        <div th:if="${selectedUser == null}" style="text-align:center; margin-top:100px; color:#94a3b8;">
+            <i class="fa-solid fa-user-gear" style="font-size:50px; margin-bottom:15px;"></i>
+            <p>Detayları görmek için listeden bir personel seçin.</p>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    function executePersonnelSortFilter() {
+        var container = document.getElementById("personnelScrollArea");
+        var sortOrder = document.getElementById("perSortFilter").value;
+        if (!container) return;
+
+        var cards = Array.from(container.getElementsByClassName("per-card"));
+
+        cards.sort(function(a, b) {
+            var nameA = a.getAttribute("data-purename") || "";
+            var nameB = b.getAttribute("data-purename") || "";
+
+            var comparison = nameA.localeCompare(nameB, 'tr', { sensitivity: 'base' });
+
+            return sortOrder === "DESC" ? -comparison : comparison;
+        });
+
+        cards.forEach(function(card) {
+            container.appendChild(card);
+        });
+    }
+
+    function filterPersonnelList() {
+        var query = document.getElementById("perSearchInput").value.toLowerCase();
+        var selectedDept = document.getElementById("perDeptFilter").value;
+        var cards = document.querySelectorAll(".per-card");
+
+        cards.forEach(function(card) {
+            var cardNameAndUser = card.getAttribute("data-name").toLowerCase();
+            var cardDept = card.getAttribute("data-dept");
+
+            var matchesSearch = cardNameAndUser.includes(query);
+            var matchesDept = (selectedDept === "" || cardDept === selectedDept);
+
+            if (matchesSearch && matchesDept) {
+                card.style.display = "block";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+
+    var scrollArea = document.getElementById("personnelScrollArea");
+    window.addEventListener("DOMContentLoaded", function() {
+        executePersonnelSortFilter();
+
+        var savedPosition = localStorage.getItem("personnelScrollPos");
+        if (savedPosition && scrollArea) {
+            scrollArea.scrollTop = savedPosition;
+            localStorage.removeItem("personnelScrollPos");
+        }
+    });
+
+    function saveScrollPosition() {
+        if (scrollArea) {
+            localStorage.setItem("personnelScrollPos", scrollArea.scrollTop);
+        }
+    }
+
+    var successMsg = [[${successMessage}]];
+    var errorMsg = [[${errorMessage}]];
+    var toast = document.getElementById("dynamicToast");
+    var toastIcon = document.getElementById("toastIcon");
+    var toastMessage = document.getElementById("toastMessage");
+
+    if (successMsg) {
+        toast.className = "toast-notification toast-success show";
+        toastIcon.className = "fa-solid fa-circle-check";
+        toastMessage.innerText = successMsg;
+        setTimeout(function() { toast.classList.remove("show"); }, 3500);
+    } else if (errorMsg) {
+        toast.className = "toast-notification toast-error show";
+        toastIcon.className = "fa-solid fa-triangle-exclamation";
+        toastMessage.innerText = errorMsg;
+        setTimeout(function() { toast.classList.remove("show"); }, 3500);
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

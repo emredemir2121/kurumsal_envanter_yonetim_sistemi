@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - Yeni Donanım Talebi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f1f5f9; height: 100vh; overflow: hidden; }
+    .sidebar { width: 280px; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; font-weight: 700; letter-spacing: 1px; }
+    .user-profile-badge { background: #0f172a; padding: 20px 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 25px; text-align: center; }
+    .user-profile-badge p { font-size: 15px; font-weight: 600; color: #f8fafc; }
+    .user-profile-badge span { font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; background: #0f172a; padding: 3px 12px; border-radius: 12px; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: .2s; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a:hover, .sidebar-menu a.active { background: #1e293b; color: white; border-left: 4px solid #38bdf8; }
+    .sidebar-menu a.active { background: #38bdf8; color: #0f172a; font-weight: 600; border-left: none; }
+    .btn-logout { background: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-logout:hover { background-color: #dc2626; }
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .top-welcome-bar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; shrink: 0; }
+    .welcome-message h1 { font-size: 20px; color: #0f172a; font-weight: 700; }
+    .welcome-message p { font-size: 13px; color: #64748b; }
+    .filter-header-wrapper { display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; shrink: 0; }
+    .filter-header-wrapper label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; }
+    .filter-header-wrapper select { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: white; color: #334155; min-width: 180px; }
+    .main-content { flex: 1; padding: 25px; display: flex; flex-direction: column; overflow: hidden; }
+    .panel { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,.03); border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .panel h3 { font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; color: #0f172a; font-weight: 700; shrink: 0; }
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 14px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+    tbody tr:hover { background-color: #f8fafc; }
+    .btn-inline-assign { background: #2563eb; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.2s; }
+    .btn-inline-assign:hover { background: #1d4ed8; }
+    .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; z-index: 9999; transition: right .4s; }
+    .toast-notification.show { right: 20px; }
+    .toast-success { background: #10b981; }
+  </style>
+</head>
+<body>
+<div id="dynamicToast" class="toast-notification"><i id="toastIcon" class="fa-solid"></i><span id="toastMessage">Bildirim</span></div>
+
+<div class="sidebar">
+  <div>
+    <div class="sidebar-brand"><h2>BETA TEKNOLOJİ</h2></div>
+    <div class="user-profile-badge">
+      <i class="fa-solid fa-circle-user" style="font-size:40px; color:#38bdf8; margin-bottom:10px; display:block;"></i>
+      <p id="jsActiveUserName" th:text="${user.fullName}"></p>
+      <span th:text="${user.department} + ' Dep.'"></span>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/user/dashboard}"><i class="fa-solid fa-box"></i> Zimmetlerim</a></li>
+      <li><a th:href="@{/user/request}" class="active"><i class="fa-solid fa-circle-plus"></i> Yeni Talep Oluştur</a></li>
+      <li><a th:href="@{/user/history}"><i class="fa-solid fa-clock-rotate-left"></i> İade Geçmişim</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-wrapper">
+  <div class="top-welcome-bar">
+    <div class="welcome-message">
+      <h1>Donanım Talep Kataloğu</h1>
+      <p>Envanterdeki cihazların teknik özelliklerini inceleyerek talep oluşturabilirsiniz.</p>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="panel">
+      <h3><i class="fa-solid fa-boxes-stacked" style="color:#2563eb;"></i> Talep Edilebilir Aktif Stok Havuzu</h3>
+      <div class="filter-header-wrapper">
+        <label for="catalogTypeFilter">Donanım Tipi Seçin:</label>
+        <select id="catalogTypeFilter" onchange="filterCatalogTable()">
+          <option value="">Tüm Donanımları Listele</option>
+        </select>
+      </div>
+
+      <div class="scroll-area">
+        <table id="catalogTable">
+          <thead>
+          <tr>
+            <th>Marka / Üretici</th>
+            <th>Model Adı</th>
+            <th>Donanım Tipi</th>
+            <th>Teknik Özellikler / Donanım Detayı</th>
+            <th style="text-align: center; width: 140px;">Eylem</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="p : ${availableProducts}" class="catalog-row" th:data-type="${p.productType}">
+            <td th:text="${p.brand}" style="font-weight: 600; color:#0f172a;"></td>
+            <td th:text="${p.modelName}"></td>
+            <td th:text="${p.productType}"></td>
+            <td th:text="${p.specifications}" style="color:#475569; font-size:12.5px;"></td>
+            <td style="text-align: center;">
+              <form th:action="@{/user/request-item}" method="post" th:onsubmit="return confirmAssignInline(this, [[${p.brand} + ' ' + ${p.modelName}]])">
+                <input type="hidden" name="productId" th:value="${p.id}">
+                <button type="submit" class="btn-inline-assign"><i class="fa-solid fa-paper-plane"></i> Talep Et</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(availableProducts)}">
+            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;">Talep edilebilecek aktif donanım bulunmamaktadır.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  window.addEventListener("DOMContentLoaded", function() {
+      var filter = document.getElementById("catalogTypeFilter");
+      var rows = document.querySelectorAll(".catalog-row");
+      var types = new Set();
+
+      rows.forEach(row => {
+          var t = row.getAttribute("data-type");
+          if(t) types.add(t.trim());
+      });
+      types.forEach(t => {
+          var opt = document.createElement("option"); opt.value = t; opt.text = t; filter.appendChild(opt);
+      });
+
+      var successMsg = [[${successMessage}]];
+      var toast = document.getElementById("dynamicToast");
+      if(successMsg){
+          document.getElementById("toastIcon").className = "fa-solid fa-circle-check";
+          document.getElementById("toastMessage").innerText = successMsg;
+          toast.className = "toast-notification toast-success show";
+          setTimeout(() => toast.classList.remove("show"), 3500);
+      }
+  });
+
+  function filterCatalogTable() {
+      var selectedType = document.getElementById("catalogTypeFilter").value;
+      var rows = document.querySelectorAll(".catalog-row");
+
+      rows.forEach(row => {
+          var t = row.getAttribute("data-type");
+          row.style.display = (selectedType === "" || t === selectedType) ? "" : "none";
+      });
+  }
+
+  function confirmAssignInline(form, productName) {
+      return confirm("Sayın " + document.getElementById("jsActiveUserName").innerText + ",\n\n" + productName + " cihazı için sistem yöneticisine ZİMMET TALEBİ iletmek istediğinize emin misiniz?");
+  }
+  /*]]>*/
+</script>
+</body>
+</html>

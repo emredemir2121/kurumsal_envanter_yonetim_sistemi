@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Beta Teknoloji - Envanter Yönetimi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { display: flex; background-color: #f4f6f9; height: 100vh; overflow: hidden; position: relative; }
+
+    /* STANDART SIDEBAR (DASHBOARD VE PERSONEL İLE BİREBİR EŞİT) */
+    .sidebar { width: 280px; background-color: #1e293b; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; shrink: 0; }
+    .sidebar-brand h2 { font-size: 22px; color: #38bdf8; text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-weight: 700; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-menu a { display: block; color: #94a3b8; padding: 12px 15px; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+    .sidebar-menu a i { width: 20px; text-align: center; margin-right: 8px; }
+    .sidebar-menu a.active, .sidebar-menu a:hover { background-color: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+    .btn-logout { background-color: #ef4444; color: white; text-align: center; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; width: 100%; cursor: pointer; }
+    .btn-logout:hover { background-color: #dc2626; }
+
+    /* Main Grid Layout */
+    .main-content { flex: 1; padding: 25px; display: grid; grid-template-columns: 380px 1fr; gap: 20px; height: 100vh; overflow: hidden; }
+    .panel { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; padding: 20px; }
+    .panel h3 { font-size: 15px; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; color: #1e293b; font-weight: 700; shrink: 0; }
+
+    /* ENVANTER İÇİN ÜST FİLTRELEME BARI STİLLERİ */
+    .inventory-filter-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: flex; gap: 12px; shrink: 0; }
+    .search-wrapper { position: relative; flex: 2; }
+    .search-wrapper i { position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 13px; }
+    .search-wrapper input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; }
+    .search-wrapper input:focus { border-color: #3b82f6; }
+    .select-wrapper { flex: 1; }
+    .select-wrapper select { width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; outline: none; background-color: white; }
+    .select-wrapper select:focus { border-color: #3b82f6; }
+
+    /* Bağımsız Kaydırma Alanı */
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+    .scroll-area::-webkit-scrollbar { width: 5px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+
+    /* AÇILIR MENÜ BUTONU VE FORM KAPSAYICISI */
+    .form-toggle-btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-bottom: 10px; transition: background 0.2s; shrink: 0; }
+    .form-toggle-btn:hover { background: #2563eb; }
+
+    .form-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #f8fafc; border-radius: 8px; display: flex; flex-direction: column; }
+    .form-box.open { max-height: calc(100vh - 150px); border: 1px solid #e2e8f0; margin-bottom: 15px; }
+
+    .form-scrollable-content { overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+    .form-scrollable-content::-webkit-scrollbar { width: 4px; }
+    .form-scrollable-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+    .form-group input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; outline: none; background: white; width: 100%; }
+    .form-group input:focus { border-color: #3b82f6; }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .btn-save-product { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; width: 100%; transition: 0.2s; margin-top: 5px; shrink: 0; }
+    .btn-save-product:hover { background: #059669; }
+
+    /* Kurumsal Veri Tablosu */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    th { background: #f8fafc; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+
+    .product-row { cursor: pointer; transition: 0.15s; }
+    .product-row:hover { background-color: #f1f5f9 !important; }
+    .product-row.selected-row { background-color: #eff6ff !important; border-left: 4px solid #3b82f6; }
+
+    /* KRİTİK STOK BOYAMA STİLİ */
+    .critical-stock { background-color: #fee2e2 !important; color: #991b1b; }
+    .critical-stock:hover { background-color: #fca5a5 !important; }
+
+    .btn-row-delete { background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s; }
+    .btn-row-delete:hover { background-color: #dc2626; }
+
+    .action-bar { display: flex; justify-content: flex-end; padding-top: 15px; border-top: 2px solid #f1f5f9; shrink: 0; margin-top: 10px; }
+    .btn-csv { padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; transition: 0.2s; background-color: #6b7280; color: white; text-decoration: none; }
+    .btn-csv:hover { background-color: #4b5563; }
+
+    /* Toast */
+    .toast-notification { position: fixed; top: 20px; right: -450px; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; z-index: 9999; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .toast-notification.show { right: 20px; }
+    .toast-success { background-color: #10b981; }
+    .toast-error { background-color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div id="dynamicToast" class="toast-notification">
+  <i id="toastIcon" class="fa-solid"></i>
+  <span id="toastMessage">Bildirim</span>
+</div>
+
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <h2>BETA TEKNOLOJİ</h2>
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/dashboard}"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+      <li><a th:href="@{/personnel}"><i class="fa-solid fa-users"></i> Personel Yönetimi</a></li>
+      <li><a th:href="@{/inventory}" class="active"><i class="fa-solid fa-box"></i> Envanter Yönetimi</a></li>
+      <li><a th:href="@{/suppliers}"><i class="fa-solid fa-truck-field"></i> Tedarikçiler</a></li>
+      <li><a th:href="@{/assignments}"><i class="fa-solid fa-route"></i> Tüm Zimmet Kayıtları</a></li>
+      <li><a th:href="@{/requests}"><i class="fa-solid fa-bell"></i> Zimmet Talepleri</a></li>
+      <li><a th:href="@{/logs}"><i class="fa-solid fa-list-ul"></i> Sistem Kayıtları</a></li>
+    </ul>
+  </div>
+
+  <form th:action="@{/logout}" method="post" id="logoutForm" style="display: none;"></form>
+  <button class="btn-logout" onclick="if(confirm('Sistemden çıkış yapmak istediğinize emin misiniz?')) document.getElementById('logoutForm').submit();">
+    <i class="fa-solid fa-lock"></i> Güvenli Çıkış
+  </button>
+</div>
+
+<div class="main-content">
+
+  <div class="panel">
+    Envanter ve Kaynak Yönetimi<h3><i class="fa-solid fa-sliders"></i> Ürün İşlemleri</h3>
+
+    <button class="form-toggle-btn" onclick="toggleProductForm()">
+      <i class="fa-solid fa-box-open"></i> Yeni Ürün Ekle / Güncelle
+    </button>
+
+    <div id="productFormContainer" class="form-box" th:classappend="${fetchedProduct != null} ? 'open' : ''">
+      <div class="form-scrollable-content">
+        <form th:action="@{/inventory/save}" th:object="${productForm}" method="post" id="productForm">
+
+          <div class="form-group">
+            <label>🆔 Ürün ID:</label>
+            <input type="text" id="productIdField" th:field="*{id}" placeholder="Yeni kayıt için boş bırakın">
+          </div>
+          <button type="button" class="form-toggle-btn" style="background:#4b5563; margin-top: 5px; margin-bottom:12px; font-size:12px; padding:6px;" onclick="fetchProductData()">
+            <i class="fa-solid fa-magnifying-glass"></i> ID ile Veri Getir
+          </button>
+
+          <div class="form-group">
+            <label>Marka:</label>
+            <input type="text" th:field="*{brand}" required>
+          </div>
+          <div class="form-group">
+            <label>Model:</label>
+            <input type="text" th:field="*{modelName}" required>
+          </div>
+          <div class="form-group">
+            <label>Ürün Tipi:</label>
+            <input type="text" th:field="*{productType}" placeholder="Örn: LAPTOP" required>
+          </div>
+          <div class="form-group">
+            <label>Birim Fiyat (TL):</label>
+            <input type="text" th:field="*{price}" required>
+          </div>
+          <div class="form-group">
+            <label>Stok Miktarı:</label>
+            <input type="number" th:field="*{stockQuantity}" required>
+          </div>
+          <div class="form-group">
+            <label>Teknik Özellikler:</label>
+            <input type="text" th:field="*{specifications}">
+          </div>
+          <div class="form-group">
+            <label>Kategori ID:</label>
+            <input type="number" name="categoryId" th:value="${fetchedProduct != null && fetchedProduct.category != null} ? ${fetchedProduct.category.id} : '1'" required>
+          </div>
+
+          <button type="submit" class="btn-save-product">
+            <i class="fa-solid fa-circle-check"></i> OK / Kaydet (Envantere İşle)
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3><i class="fa-solid fa-boxes-stacked"></i> Envanter Stok Havuzu</h3>
+
+    <div class="inventory-filter-box">
+      <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="invSearchInput" onkeyup="filterInventoryTable()" placeholder="Marka veya model adına göre ara...">
+      </div>
+      <div class="select-wrapper">
+        <select id="invTypeFilter" onchange="filterInventoryTable()">
+          <option value="">Tüm Tipler</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="scroll-area" id="inventoryScrollArea">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Marka</th>
+          <th>Model</th>
+          <th>Tip</th>
+          <th>Fiyat</th>
+          <th>Stok</th>
+          <th>Özellikler</th>
+          <th>K.ID</th>
+          <th style="text-align: center;">Aksiyon</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="prod : ${products}"
+            class="product-row"
+            th:data-brand="${prod.brand}"
+            th:data-model="${prod.modelName}"
+            th:data-type="${prod.productType}"
+            th:classappend="(${prod.stockQuantity <= stockEvaluator.apply(prod.productType)} ? 'critical-stock ' : '') + (${fetchedProduct != null && fetchedProduct.id == prod.id} ? 'selected-row' : '')"
+            th:onclick="'saveInventoryScroll(); location.href=\'/inventory?fetchId=\' + ${prod.id}'">
+
+          <td th:text="${prod.id}">3</td>
+          <td th:text="${prod.brand}" style="font-weight: 600;">Brand</td>
+          <td th:text="${prod.modelName}">Model</td>
+          <td th:text="${prod.productType}">Type</td>
+          <td th:text="${prod.formattedPrice}">6.500,00 TL</td>
+
+          <td>
+            <span th:text="${prod.stockQuantity}" style="font-weight: 700;">0</span>
+            <i th:if="${prod.stockQuantity <= stockEvaluator.apply(prod.productType)}" class="fa-solid fa-triangle-exclamation" title="Kritik Limit Altında!" style="color: #ef4444; margin-left: 4px;"></i>
+          </td>
+
+          <td th:text="${prod.specifications}">Specs</td>
+          <td th:text="${prod.categoryId}">1</td>
+
+          <td style="text-align: center;">
+            <form th:action="@{/inventory/delete}" method="post" style="display: inline;"
+                  onsubmit="return confirm('Bu ürünü envanterden silmek istediğinize emin misiniz?');">
+              <input type="hidden" name="deleteProductId" th:value="${prod.id}">
+              <button type="submit" class="btn-row-delete" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-trash-can"></i> Sil
+              </button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="action-bar">
+      <a th:href="@{/inventory/export-csv}" class="btn-csv">
+        <i class="fa-solid fa-file-csv"></i> CSV Aktar
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+
+  window.addEventListener("DOMContentLoaded", function() {
+      var typeFilter = document.getElementById("invTypeFilter");
+      var rows = document.querySelectorAll(".product-row");
+      var types = new Set();
+
+      rows.forEach(function(row) {
+          var t = row.getAttribute("data-type");
+          if(t && t.trim() !== "") {
+              types.add(t.trim());
+          }
+      });
+
+      types.forEach(function(type) {
+          var opt = document.createElement("option");
+          opt.value = type;
+          opt.text = type;
+          typeFilter.appendChild(opt);
+      });
+
+      var savedPos = localStorage.getItem("invScrollPos");
+      if (savedPos && invScroll) {
+          invScroll.scrollTop = savedPos;
+          localStorage.removeItem("invScrollPos");
+      }
+  });
+
+  function filterInventoryTable() {
+      var searchInput = document.getElementById("invSearchInput").value.toLowerCase();
+      var selectedType = document.getElementById("invTypeFilter").value;
+      var rows = document.querySelectorAll(".product-row");
+
+      rows.forEach(function(row) {
+          var brand = row.getAttribute("data-brand").toLowerCase();
+          var model = row.getAttribute("data-model").toLowerCase();
+          var type = row.getAttribute("data-type");
+
+          var matchesSearch = brand.includes(searchInput) || model.includes(searchInput);
+          var matchesType = (selectedType === "" || type === selectedType);
+
+          if(matchesSearch && matchesType) {
+              row.style.display = "";
+          } else {
+              row.style.display = "none";
+          }
+      });
+  }
+
+  function toggleProductForm() {
+      var container = document.getElementById("productFormContainer");
+      container.classList.toggle("open");
+  }
+
+  var invScroll = document.getElementById("inventoryScrollArea");
+  function saveInventoryScroll() {
+      if (invScroll) {
+          localStorage.setItem("invScrollPos", invScroll.scrollTop);
+      }
+  }
+
+  function fetchProductData() {
+      var idVal = document.getElementById("productIdField").value;
+      if(!idVal || idVal.trim() === "") {
+          alert("Lütfen önce veri getirmek istediğiniz Ürün ID'sini giriniz.");
+          return;
+      }
+      saveInventoryScroll();
+      location.href = "/inventory?fetchId=" + idVal.trim();
+  }
+
+  var successMsg = [[${successMessage}]];
+  var errorMsg = [[${errorMessage}]];
+  var toast = document.getElementById("dynamicToast");
+  var toastIcon = document.getElementById("toastIcon");
+  var toastMessage = document.getElementById("toastMessage");
+
+  if (successMsg) {
+      toast.className = "toast-notification toast-success show";
+      toastIcon.className = "fa-solid fa-circle-check";
+      toastMessage.innerText = successMsg;
+      setTimeout(function() { toast.classList.remove("show"); }, 3500);
+  } else if (errorMsg) {
+      toast.className = "toast-notification toast-error show";
+      toastIcon.className = "fa-solid fa-triangle-exclamation";
+      toastMessage.innerText = errorMsg;
+      setTimeout(function() { toast.classList.remove("show"); }, 3500);
+  }
+  /*]]>*/
+</script>
+</body>
+</html>
