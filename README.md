@@ -19,5 +19,5 @@ Bu proje, bir kuruluşun teknolojik varlıklarını ve personel zimmet süreçle
 * **Backend:** Spring Boot, Spring Security, Spring Data JPA.
 * **Veri Transfer Güvenliği:** Veritabanı modellerinin (Entity) doğrudan arayüze açılmasını engelleyen kurumsal DTO (Data Transfer Object) yapıları kullanılmıştır.
 * **Frontend:** Sunucu tarafında dinamik sayfalar oluşturan Thymeleaf şablon motoru ve HTML tercih edilmiştir.
-* **Veritabanı:** Normalize (3NF) edilmiş tablolarla MySQL 8.0 kullanılmıştır[cite: 1].
-* **Test Süreçleri:** Sistemin kararlılığı ve iş kuralları JUnit 5 ve Mockito kütüphaneleri tabanlı birim testleri (Unit Tests) ile doğrulanmıştır[cite: 1].
+* **Veritabanı:** Normalize (3NF) edilmiş tablolarla MySQL 8.0 kullanılmıştır.
+* **Test Süreçleri:** Sistemin kararlılığı ve iş kuralları JUnit 5 ve Mockito kütüphaneleri tabanlı birim testleri (Unit Tests) ile doğrulanmıştır.
